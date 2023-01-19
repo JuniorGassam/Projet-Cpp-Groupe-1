@@ -1,94 +1,87 @@
+//
+// Created by amin on 17/01/2023.
+//
 #include <iostream>
-#include <windows.h>
 #include <filesystem>
-#include <fstream>
 #include <string>
 #include "Drive.h"
+//#include "notif.h"
+
+#include <tchar.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <strsafe.h>
+#include "Testing/resource.h"
+#define UNICODE
+#include <windows.h>
+
 
 using namespace std;
 
-Drive::Drive()
-{
+// tray icon data
+NOTIFYICONDATA m_NID;
 
+BOOL CreateTrayIcon()
+{
+    memset(&m_NID, 0, sizeof(m_NID));
+    m_NID.cbSize = sizeof(m_NID);
+
+    m_NID.uID = IDI_USER_IMAGE;
+
+    // set handle to the window that receives tray icon notifications
+    m_NID.hWnd = GetForegroundWindow();
+
+    // fields that are being set when adding tray icon
+    m_NID.uFlags = NIF_MESSAGE | NIF_ICON;
+
+    // set image
+    m_NID.hIcon = LoadIcon(NULL,MAKEINTRESOURCE(IDI_USER_IMAGE));
+
+    if (!m_NID.hIcon)
+        return FALSE;
+
+    m_NID.uVersion = NOTIFYICON_VERSION_4;
+
+    if (!Shell_NotifyIcon(NIM_ADD, &m_NID))
+        return FALSE;
+
+    return Shell_NotifyIcon(NIM_SETVERSION, &m_NID);
 }
 
-Drive::detect()
+BOOL ShowTrayIconBalloon(LPCTSTR pszTitle, LPCTSTR pszText, UINT unTimeout, DWORD dwInfoFlags)
 {
+    m_NID.uFlags |= NIF_INFO;
+    m_NID.uFlags |= NIF_ICON;
+    //m_NID.uFlags |= NIF_ICON | NIF_TIP | NIF_GUID | NIF_MESSAGE;
+    m_NID.uTimeout = unTimeout;
+    m_NID.dwInfoFlags = dwInfoFlags;
 
+    if (StringCchCopy(m_NID.szInfoTitle, sizeof(m_NID.szInfoTitle), reinterpret_cast<STRSAFE_LPCSTR>(pszTitle)) != S_OK)
+        return FALSE;
+
+    if (StringCchCopy(m_NID.szInfo, sizeof(m_NID.szInfo), reinterpret_cast<STRSAFE_LPCSTR>(pszText)) != S_OK)
+        return FALSE;
+
+    return Shell_NotifyIcon(NIM_MODIFY, &m_NID);
 }
 
-Drive::~Drive()
-{
-    wait();
+copy(){
+    CreateTrayIcon();
+    ShowTrayIconBalloon("Keyce drive", "Nouvelle cle detecte", 10000, NULL);
 }
 
-string allDrives;
 
-char Drive::getUsb()
+
+using namespace std;
+
+
+int main()
 {
-    char usb = '0';
-    char sizeLocalDrive[MAX_PATH];
-    DWORD dResult = GetLogicalDriveStrings(MAX_PATH, sizeLocalDrive);
-    string currentUsb = "";
-    for(int i = 0; i < dResult; i++)
-    {
-        if(sizeLocalDrive[i] > 64 && sizeLocalDrive[i] < 90)
-        {
-            currentUsb.append(1, sizeLocalDrive[i]);
-            if(allDrives.find(sizeLocalDrive[i]) > 100)
-            {
-                usb = sizeLocalDrive[i];
-            }
-        }
-    }
-    allDrives = currentUsb;
-
-    return usb;
-}
-
-void Drive::wait()
-{
-    char usbLetter = getUsb();
-
-    while(true)
-    {
-        usbLetter = getUsb();
-        if(usbLetter != '0')
-        {
-            printf("%c\n ", usbLetter);
-            sync(usbLetter);
-            Sleep(1000);
-        }
-    }
-}
-
-void Drive::sync(char usb)
-{
-    string filename(1, usb);
-    filename += ":\\keyce_drive";
-    cout << filename;
-    if(filesystem::is_directory(filename))
-    {
-        for(const auto & entry : filesystem::directory_iterator(filename))
-        {
-//            cout << entry.path() << endl;
-            kCopy(entry.path().string(), entry.path().filename().string());
-        }
-    }
-}
-
-void Drive::kCopy(string file, string name)
-{
-    cout << file;
-    ofstream ofile ("C:\\Users\\OCEANE\\Desktop\\keyce_drive\\"+ name,std::ios_base::binary);
-    ifstream sfile (file, std::ios_base::binary);
-    char buffer[1024];
-    while(sfile.read(buffer, sizeof(buffer)))
-    {
-        ofile.write(buffer, sfile.gcount());
-    }
-//    ofile.write(buffer, sfile.gcount());
-
-    ofile.close();
-    sfile.close();
+    Drive d;
+    d.detect();
+    notif();
+//    d.sync('G'); ;
+    return 0;
 }

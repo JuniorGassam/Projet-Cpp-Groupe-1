@@ -1,6 +1,6 @@
-
-
-
+//
+// Created by amin on 17/01/2023.
+//
 using namespace std;
 
 #ifndef NOTIF_H_INCLUDED
@@ -22,7 +22,7 @@ using namespace std;
 #include <windows.h>
 
 void notif();
-BOOL ShowTrayIconBalloon(LPCTSTR pszTitle, LPCTSTR pszText, UINT unTimeout, DWORD dwInfoFlags);
+BOOL ShowTrayIconBalloon(const char *pszTitle, LPCTSTR pszText, UINT unTimeout, DWORD dwInfoFlags);
 BOOL CreateTrayIcon();
 
 #endif // NOTIF_H_INCLUDED

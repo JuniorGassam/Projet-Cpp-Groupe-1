@@ -1,3 +1,6 @@
+//
+// Created by amin on 17/01/2023.
+//
 #include <iostream>
 #include <filesystem>
 #include <string>
@@ -54,16 +57,19 @@ BOOL ShowTrayIconBalloon(LPCTSTR pszTitle, LPCTSTR pszText, UINT unTimeout, DWOR
     m_NID.uTimeout = unTimeout;
     m_NID.dwInfoFlags = dwInfoFlags;
 
-    if (StringCchCopy(m_NID.szInfoTitle, sizeof(m_NID.szInfoTitle), pszTitle) != S_OK)
-        return FALSE;
+    if (StringCchCopy(m_NID.szInfoTitle, sizeof(m_NID.szInfoTitle), reinterpret_cast<STRSAFE_LPCSTR>(pszTitle)) == S_OK) {
 
-    if (StringCchCopy(m_NID.szInfo, sizeof(m_NID.szInfo), pszText) != S_OK)
-        return FALSE;
+        if (StringCchCopy(m_NID.szInfo, sizeof(m_NID.szInfo), reinterpret_cast<STRSAFE_LPCSTR>(pszText)) != S_OK) {
+            return FALSE;
+        }
 
-    return Shell_NotifyIcon(NIM_MODIFY, &m_NID);
+        return Shell_NotifyIcon(NIM_MODIFY, &m_NID);
+    } else {
+        return FALSE;
+    }
 }
 
 notif(){
     CreateTrayIcon();
-    ShowTrayIconBalloon("Keyce drive", "Nouvelle cle detecte", 10000, NULL);
+    ShowTrayIconBalloon("Keyce drive", ("Nouvelle cle detecte"), 10000, NULL);
 }
